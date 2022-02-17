@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User
+from models import db, User, Character, UserFavourite, Planet
 #from models import Person
 
 app = Flask(__name__)
@@ -38,6 +38,78 @@ def handle_hello():
     }
 
     return jsonify(response_body), 200
+
+@app.route('/people', methods=['GET'])
+def get_all_people():
+    peoples = Character.query.all()
+    people_json = []
+    for people in peoples:
+        people_json.append(people.serialize())
+    return jsonify(people_json), 200
+
+@app.route('/people/<id>', methods=['GET'])
+def get_people(id):
+    peoples = Character.query.get(id)
+    return jsonify(peoples.serialize()), 200
+
+@app.route('/planets', methods=['GET'])
+def get_all_planet():
+    planets = Planet.query.all()
+    planet_json = []
+    for planet in planets:
+        planet_json.append(planet.serialize())
+    return jsonify(planet_json), 200
+
+@app.route('/planets/<id>', methods=['GET'])
+def get_planet(id):
+    planets = Planet.query.get(id)
+    return jsonify(planets.serialize()), 200
+
+@app.route('/users', methods=['GET'])
+def get_all_user():
+    users = User.query.all()
+    user_json = []
+    for user in users:
+        user_json.append(user.serialize())
+    return jsonify(user_json), 200
+
+@app.route('/users/favorites', methods=['GET'])
+def get_all_favorite():
+    favorites = UserFavorite.query.all()
+    favorite_json = []
+    for favorite in favorites:
+        favorite_json.append(favorite.serialize())
+    return jsonify(favorite_json), 200
+    
+@app.route('/favorite/planet/<id>', methods=['POST'])
+def post_favorite_planet():
+    body = request.get_json()
+    favorite_planet = Planet(name=body['name'], id=body['id'])
+    db.session.add(favorite_planet)
+    db.session.commit()
+    return jsonify(favorite_planet.serialize()), 201
+
+@app.route('/favorite/people/<id>', methods=['POST'])
+def post_favorite_people():
+    body = request.get_json()
+    favorite_people = Character(name=body['name'], id=body['id'])
+    db.session.add(favorite_people)
+    db.session.commit()
+    return jsonify(favorite_people.serialize()), 201
+
+@app.route('/favorite/planet/<id_planet>', methods=['DELETE'])
+def delete_planet(id_planet):
+    favorite_planet = UserFavorite.query.get(id_planet)
+    db.session.delete(favorite_planet)
+    db.session.commit()
+    return jsonify(favorite_planet.serialize()), 200
+
+@app.route('/favorite/peoples/<id_character>', methods=['DELETE'])
+def delete_people(id_character):
+    favorite_people = UserFavorite.query.get(id_character)
+    db.session.delete(favorite_people)
+    db.session.commit()
+    return jsonify(favorite_people.serialize()), 200
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
